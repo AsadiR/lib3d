@@ -1,0 +1,12 @@
+[package]
+name = "lib3d"
+version = "0.1.0"
+authors = ["Euegene <AsadiR.KEV@gmail.com>"]
+description = "Простой пример для отладки"
+
+# Профиль dev используется по умолчанию при вызове команды cargo build
+[profile.dev]
+debug = true  # Добавляет флаг `-g` для компилятора;
+opt-level = 0 # Отключаем оптимизацию кода;
+
+[dependencies]

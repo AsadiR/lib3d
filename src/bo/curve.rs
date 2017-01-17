@@ -1,4 +1,5 @@
-use base_objects::point::Point;
+use bo::point::Point;
+use bo::base_object::BaseObject;
 
 pub struct Curve {
     points: Vec<Point>
@@ -9,14 +10,15 @@ impl Curve {
         self.points.len()
     }
 }
+impl BaseObject for Curve {}
 
 
 
 
 #[cfg(test)]
 mod tests {
-    use base_objects::point::Point;
-    use base_objects::curve::Curve;
+    use bo::point::Point;
+    use bo::curve::Curve;
 
     #[test]
     fn number_of_segments_check() {

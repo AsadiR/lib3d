@@ -1,4 +1,4 @@
-use base_objects::point::Point;
+use bo::point::Point;
 
 /*
 TODO:

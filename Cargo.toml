@@ -10,3 +10,9 @@ debug = true  # Добавляет флаг `-g` для компилятора;
 opt-level = 0 # Отключаем оптимизацию кода;
 
 [dependencies]
+time = "*"
+cgmath = "*"
+rulinalg = "0.4.1"
+stl = "*"
+byteorder = "*"
+#scirust = "0.0.5"

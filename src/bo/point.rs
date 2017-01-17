@@ -1,14 +1,25 @@
 use std::ops::Add;
 use std::ops::Sub;
 use std::fmt;
-use base_objects::vector::Vector;
-use base_objects::eq_f64;
+use bo::vector::Vector;
+use bo::eq_f32;
+use bo::base_object::BaseObject;
+use std::cmp::Ordering;
 
-
+#[derive(Clone)]
 pub struct Point {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64
+    pub x: f32,
+    pub y: f32,
+    pub z: f32
+}
+
+impl Point {
+    pub fn convert_to_vector(self) -> Vector {
+        Vector {x: self.x, y: self.y, z: self.z}
+    }
+    pub fn new(x : f32, y : f32, z : f32) -> Point {
+        Point{x: x, y: y, z: z}
+    }
 }
 
 impl<'a,'b> Add<&'b Vector> for &'a Point {
@@ -35,16 +46,37 @@ impl fmt::Display for Point {
 
 impl PartialEq for Point {
     fn eq(&self, other: &Point) -> bool {
-        eq_f64(self.x, other.x) & eq_f64(self.y, other.y) & eq_f64(self.z, other.z)
+        eq_f32(self.x, other.x) & eq_f32(self.y, other.y) & eq_f32(self.z, other.z)
     }
 }
 impl Eq for Point {}
 
+impl Ord for Point {
+    fn cmp(&self, other: &Point) -> Ordering {
+        match self {
+            _ if *self == *other => Ordering::Equal,
+            _ if (self.x < other.x) |
+                eq_f32(self.x,other.x) & (self.y < other.y) |
+                eq_f32(self.x,other.x) & eq_f32(self.y,other.y) & (self.z < other.z) => Ordering::Less,
+            _ => Ordering::Greater
+        }
+    }
+}
+
+impl PartialOrd for Point {
+    fn partial_cmp(&self, other: &Point) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+
+impl BaseObject for Point {}
+
 
 #[cfg(test)]
 mod tests {
-    use super::super::vector::Vector;
-    use super::super::point::Point;
+    use bo::vector::Vector;
+    use bo::point::Point;
 
     #[test]
     fn point_plus_vector() {

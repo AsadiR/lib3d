@@ -1,9 +1,11 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
-}
+extern crate core;
+extern crate time;
+extern crate cgmath;
+extern crate rulinalg;
+extern crate stl;
+extern crate byteorder;
 
-pub mod base_objects;
+pub mod bo;
+pub mod cf;
+pub mod qm;
 

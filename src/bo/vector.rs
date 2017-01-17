@@ -1,32 +1,57 @@
 use std::ops::Add;
 use std::ops::Sub;
+use std::ops::Mul;
 use std::fmt;
-use base_objects::eq_f64;
+use bo::eq_f32;
+use bo::point::Point;
 
 pub struct Vector {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64
+    pub x: f32,
+    pub y: f32,
+    pub z: f32
 }
 
+const ZERO : Vector = Vector {x: 0., y: 0., z:0.};
+
 impl Vector {
-    pub fn dot_product(&self, other: &Vector) -> f64 {
+    pub fn dot_product(&self, other: &Vector) -> f32 {
         self.x*other.x + self.y*other.y + self.z*other.z
     }
+
     pub fn cross_product(&self, other: &Vector) -> Vector {
         //a2*b3  -   a3*b2,     a3*b1   -   a1*b3,     a1*b2   -   a2*b1
         Vector {x: self.y*other.z - self.z*other.y,
                 y: self.z*other.x - self.x*other.z,
                 z: self.x*other.y - self.y*other.x}
     }
-    pub fn mixed_product(&self, a: &Vector, b: &Vector) -> f64 {
+
+    pub fn mixed_product(&self, a: &Vector, b: &Vector) -> f32 {
         self.dot_product(&(a.cross_product(b)))
+    }
+
+    pub fn is_it_zero(&self) -> bool {
+        ZERO == *self
+    }
+
+    pub fn is_collinear_to(&self, other : &Vector) -> bool {
+        self.cross_product(other).is_it_zero()
+    }
+
+    pub fn gen_point(&self) -> Point {
+        Point {
+            x: self.x.clone(),
+            y: self.y.clone(),
+            z: self.z.clone()
+        }
+    }
+    pub fn new(x : f32, y : f32, z : f32) -> Vector {
+        Vector {x:x, y:y, z:z}
     }
 }
 
 impl PartialEq for Vector {
     fn eq(&self, other: &Vector) -> bool {
-        eq_f64(self.x, other.x) & eq_f64(self.y, other.y) & eq_f64(self.z, other.z)
+        eq_f32(self.x, other.x) & eq_f32(self.y, other.y) & eq_f32(self.z, other.z)
     }
 }
 
@@ -48,6 +73,14 @@ impl<'a,'b> Sub<&'b Vector> for &'a Vector {
     }
 }
 
+impl<'a> Mul<f32> for &'a Vector {
+    type Output = Vector;
+
+    fn mul(self, other: f32) -> Vector {
+        Vector { x: self.x*other, y: self.y*other, z: self.z*other }
+    }
+}
+
 
 impl fmt::Display for Vector {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -57,8 +90,8 @@ impl fmt::Display for Vector {
 
 #[cfg(test)]
 mod tests {
-    use base_objects::vector::Vector;
-    use base_objects::eq_f64;
+    use bo::vector::Vector;
+    use bo::eq_f32;
     //use super::super::point::Point;
 
     #[test]
@@ -85,7 +118,7 @@ mod tests {
         let v2 = Vector {x: 2.0, y: 1.0, z: 2.0};
         let dp = v2.dot_product(&v1);
         let expected_dp = 5.0;
-        assert!(eq_f64(dp,expected_dp));
+        assert!(eq_f32(dp,expected_dp));
     }
 
     #[test]
@@ -95,8 +128,8 @@ mod tests {
         let d = v2.cross_product(&v1);
         let v1_dp_d = v1.dot_product(&d);
         let v2_dp_d = v2.dot_product(&d);
-        assert!(eq_f64(v1_dp_d,0.0));
-        assert!(eq_f64(v2_dp_d,0.0));
+        assert!(eq_f32(v1_dp_d,0.0));
+        assert!(eq_f32(v2_dp_d,0.0));
     }
 
     #[test]
@@ -107,9 +140,9 @@ mod tests {
         let mp_abc = a.mixed_product(&b, &c);
         let mp_cab = c.mixed_product(&a, &b);
         let mp_bca = b.mixed_product(&c, &a);
-        assert!(eq_f64(mp_abc,mp_cab));
-        assert!(eq_f64(mp_cab,mp_bca));
-        assert!(eq_f64(mp_bca,mp_abc));
+        assert!(eq_f32(mp_abc,mp_cab));
+        assert!(eq_f32(mp_cab,mp_bca));
+        assert!(eq_f32(mp_bca,mp_abc));
     }
 
 }

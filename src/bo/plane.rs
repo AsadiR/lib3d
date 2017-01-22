@@ -1,3 +1,4 @@
+use bo::vector::Vector;
 use bo::point::Point;
 
 /*
@@ -8,8 +9,16 @@ rotate
 */
 
 
+// n*(p-p0) = 0
 pub struct Plane {
-    a : Point,
-    b : Point,
-    c : Point
+    pub normal: Vector,
+    pub point: Point,
+}
+
+impl Plane {
+
+    // n*x + d = 0
+    pub fn get_d(&self) -> f32{
+        -self.normal.dot_product(&self.point.get_vector())
+    }
 }

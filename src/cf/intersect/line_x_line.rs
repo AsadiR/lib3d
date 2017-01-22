@@ -1,8 +1,6 @@
 use qm::*;
 use bo::*;
 use cf::Af;
-use core::default::Default;
-use std::ops::{Sub,Mul};
 use rulinalg::matrix::Matrix as rMatrix;
 use rulinalg::vector::Vector as rVector;
 
@@ -12,7 +10,7 @@ pub enum InfoLxL {
     Skew,
     Collinear,
     Coincidence,
-    Intersect
+    Intersecting
 }
 
 pub trait AfLxL : Af  {
@@ -97,7 +95,7 @@ impl<QM : QualityMetric> AfLxL for RafSimpleLxL<QM> {
         let p = m1 + &(&l1 * t);
 
         //self.qm.end();
-        (Some(p), InfoLxL::Intersect)
+        (Some(p), InfoLxL::Intersecting)
     }
 }
 
@@ -122,13 +120,12 @@ mod tests {
         let mut simple_rli : RafSimpleLxL = create();
         let res = simple_rli.intersect(&l1, &l2);
 
-        if let (Some(expected_p), InfoLxL::Intersect) = res {
+        if let (Some(expected_p), InfoLxL::Intersecting) = res {
             if expected_p == (Point {x: 0.0, y: 0.0, z: 0.0}) {
                 return;
             } else {
                 panic!("Wrong result {}", expected_p);
             }
-            return;
         } else {
             panic!("Wrong info");
         }
@@ -147,13 +144,12 @@ mod tests {
         let mut simple_rli: RafSimpleLxL = create();
         let res = simple_rli.intersect(&l1, &l2);
 
-        if let (Some(expected_p), InfoLxL::Intersect) = res {
+        if let (Some(expected_p), InfoLxL::Intersecting) = res {
             if expected_p == (Point {x: 0.0, y: 0.0, z: 1.0}) {
                 return;
             } else {
                 panic!("Wrong result {}", expected_p);
             }
-            return;
         } else {
             panic!("Wrong info");
         }

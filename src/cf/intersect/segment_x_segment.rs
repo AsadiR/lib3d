@@ -2,61 +2,37 @@
 use bo::*;
 use qm::*;
 use cf::Af;
-use std::option;
-use core::default::Default;
 use std::clone::Clone;
 use cf::intersect::line_x_line::{AfLxL, InfoLxL, RafSimpleLxL};
 
 #[derive(Debug)]
 pub enum InfoSxS {
-    SegmentIntersection,
-    PointIntersection,
+    IntersectingInASegment,
+    IntersectingOnAPoint,
     Collinear,
-    NoIntersectionOnTheLine,
-    NoIntersectionInThePlane,
+    DisjointInTheLine,
+    DisjointInThePlane,
     Skew
 }
 
 // You can use different algorithms to implement this trait
 pub trait AfSxS: Af  {
     fn intersect(&mut self, a : &Segment, b : &Segment) -> (Option<Point>, Option<Segment>, InfoSxS);
+    fn intersect_segments_on_the_line(&mut self, sa : &Segment, sb : &Segment) -> (Option<Segment>, InfoSxS);
 }
 
 
 #[derive(Default)]
 pub struct RafSimpleSxS
-<QM  : QualityMetric = UselessQM, RLI : AfLxL = RafSimpleLxL>
+<QM  : QualityMetric = UselessQM, RafLxL: AfLxL = RafSimpleLxL>
 {
     pub qm : QM,
-    pub rli: RLI
+    pub raf_lxl: RafLxL
 }
 
 impl<QM  : QualityMetric, RLI : AfLxL> Af for RafSimpleSxS<QM,RLI> {}
 
-// Intersect segments lying on the same line
-pub fn intersect_segments_on_the_line(sa : &Segment, sb : &Segment) -> (Option<Segment>, InfoSxS) {
-    match 1 {
-        _ if (sa.org <= sb.org) &
-            (sa.dest >= sb.dest) => {
-            (Some(sb.clone()), InfoSxS::SegmentIntersection)
-        },
-        _ if (sb.org <= sa.org) &
-            (sb.dest >= sa.dest) => {
-            (Some(sa.clone()), InfoSxS::SegmentIntersection)
-        },
-        _ if (sa.dest > sb.org) &
-            (sa.dest < sb.dest) => {
-            (Some(Segment {org: sb.org.clone(), dest: sa.dest.clone()}),
-             InfoSxS::SegmentIntersection)
-        },
-        _ if (sb.dest > sa.org) &
-            (sb.dest < sa.dest) => {
-            (Some(Segment {org: sa.org.clone(), dest: sb.dest.clone()}),
-             InfoSxS::SegmentIntersection)
-        },
-        _ => (None, InfoSxS::NoIntersectionOnTheLine)
-    }
-}
+
 
 impl<QM  : QualityMetric, RLI : AfLxL> AfSxS for RafSimpleSxS<QM,RLI> {
 
@@ -76,24 +52,49 @@ impl<QM  : QualityMetric, RLI : AfLxL> AfSxS for RafSimpleSxS<QM,RLI> {
         //println!("la {}", a);
         //println!("lb {}", b);
 
-        let (sp, info) = self.rli.intersect(&la, &lb);
+        let (sp, info) = self.raf_lxl.intersect(&la, &lb);
         match info {
             InfoLxL::Skew => (None, None, InfoSxS::Skew),
             InfoLxL::Collinear => (None, None, InfoSxS::Collinear),
             InfoLxL::Coincidence => {
-                let (os, info) = intersect_segments_on_the_line(&la.convert_to_segment(), &lb.convert_to_segment());
+                let (os, info) = self.intersect_segments_on_the_line(&la.convert_to_segment(), &lb.convert_to_segment());
                 (None, os, info)
             },
-            InfoLxL::Intersect => {
+            InfoLxL::Intersecting => {
                 let p = sp.unwrap();
                 if (p >= la.org) & (p <= la.dest) & (p >= lb.org) & (p <= lb.dest) {
                     //println!("Good");
-                    (Some(p), None, InfoSxS::PointIntersection)
+                    (Some(p), None, InfoSxS::IntersectingOnAPoint)
                 } else {
                     //println!("Bad: {}, lb.org: {}, {}", p, lb.org, (p >= lb.org));
-                    (None, None, InfoSxS::NoIntersectionInThePlane)
+                    (None, None, InfoSxS::DisjointInThePlane)
                 }
             }
+        }
+    }
+
+    // Intersect segments lying on the same line
+    fn intersect_segments_on_the_line(&mut self, sa : &Segment, sb : &Segment) -> (Option<Segment>, InfoSxS) {
+        match 1 {
+            _ if (sa.org <= sb.org) &
+                (sa.dest >= sb.dest) => {
+                (Some(sb.clone()), InfoSxS::IntersectingInASegment)
+            },
+            _ if (sb.org <= sa.org) &
+                (sb.dest >= sa.dest) => {
+                (Some(sa.clone()), InfoSxS::IntersectingInASegment)
+            },
+            _ if (sa.dest > sb.org) &
+                (sa.dest < sb.dest) => {
+                (Some(Segment {org: sb.org.clone(), dest: sa.dest.clone()}),
+                 InfoSxS::IntersectingInASegment)
+            },
+            _ if (sb.dest > sa.org) &
+                (sb.dest < sa.dest) => {
+                (Some(Segment {org: sa.org.clone(), dest: sb.dest.clone()}),
+                 InfoSxS::IntersectingInASegment)
+            },
+            _ => (None, InfoSxS::DisjointInTheLine)
         }
     }
 }
@@ -120,7 +121,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Some(p),Option::None, InfoSxS::PointIntersection) = res  {
+        if let (Some(p),Option::None, InfoSxS::IntersectingOnAPoint) = res  {
             if p != (Point {x:0., y:0., z:0.}) {
                 panic!("Wrong result: {}", p);
             }
@@ -143,7 +144,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Option::None, InfoSxS::NoIntersectionInThePlane) = res  {}
+        if let (Option::None, Option::None, InfoSxS::DisjointInThePlane) = res  {}
         else {
             panic!("Wrong info: {:?}", res.2);
         };
@@ -200,7 +201,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Some(s), InfoSxS::SegmentIntersection) = res  {
+        if let (Option::None, Some(s), InfoSxS::IntersectingInASegment) = res  {
             let pt1 = Point {x: -2., y: 0., z: 0.};
             let pt2 = Point {x: -1., y: 0., z: 0.};
             let expected_s = Segment {org: pt1, dest: pt2};
@@ -225,7 +226,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Some(s), InfoSxS::SegmentIntersection) = res  {
+        if let (Option::None, Some(s), InfoSxS::IntersectingInASegment) = res  {
             let pt1 = Point {x: -1., y: 0., z: 0.};
             let pt2 = Point {x: 2., y: 0., z: 0.};
             let expected_s = Segment {org: pt1, dest: pt2};
@@ -250,7 +251,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Some(s), InfoSxS::SegmentIntersection) = res  {
+        if let (Option::None, Some(s), InfoSxS::IntersectingInASegment) = res  {
             let pt1 = Point {x: -1., y: 0., z: 0.};
             let pt2 = Point {x: 2., y: 0., z: 0.};
             let expected_s = Segment {org: pt1, dest: pt2};
@@ -275,7 +276,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Some(s), InfoSxS::SegmentIntersection) = res  {
+        if let (Option::None, Some(s), InfoSxS::IntersectingInASegment) = res  {
             let pt1 = Point {x: 1., y: 0., z: 0.};
             let pt2 = Point {x: 2., y: 0., z: 0.};
             let expected_s = Segment {org: pt1, dest: pt2};
@@ -300,7 +301,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Some(s), InfoSxS::SegmentIntersection) = res  {
+        if let (Option::None, Some(s), InfoSxS::IntersectingInASegment) = res  {
             let pt1 = Point {x: 1., y: 0., z: 0.};
             let pt2 = Point {x: 2., y: 0., z: 0.};
             let expected_s = Segment {org: pt1, dest: pt2};
@@ -325,7 +326,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Some(s), InfoSxS::SegmentIntersection) = res  {
+        if let (Option::None, Some(s), InfoSxS::IntersectingInASegment) = res  {
             let pt1 = Point {x: 1., y: 0., z: 0.};
             let pt2 = Point {x: 2., y: 0., z: 0.};
             let expected_s = Segment {org: pt1, dest: pt2};
@@ -350,7 +351,7 @@ mod tests {
         let mut raf_simple_sxs : RafSimpleSxS = create();
         let res = raf_simple_sxs.intersect(&s1, &s2);
 
-        if let (Option::None, Option::None, InfoSxS::NoIntersectionOnTheLine) = res  {}
+        if let (Option::None, Option::None, InfoSxS::DisjointInTheLine) = res  {}
         else {
             panic!("Wrong info: {:?}", res.2);
         };

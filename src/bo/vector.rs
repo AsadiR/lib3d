@@ -29,12 +29,12 @@ impl Vector {
         self.dot_product(&(a.cross_product(b)))
     }
 
-    pub fn is_it_zero(&self) -> bool {
+    pub fn is_zero(&self) -> bool {
         ZERO == *self
     }
 
     pub fn is_collinear_to(&self, other : &Vector) -> bool {
-        self.cross_product(other).is_it_zero()
+        self.cross_product(other).is_zero()
     }
 
     pub fn gen_point(&self) -> Point {

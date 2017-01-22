@@ -5,7 +5,8 @@ use bo::point::Point;
 use std::io::{Result, ErrorKind, Error};
 use byteorder::{ReadBytesExt, LittleEndian, WriteBytesExt};
 
-pub struct Triangle {
+
+pub struct MeshTriangle {
     pub normal: Vector,
     pub v1: usize,
     pub v2: usize,
@@ -14,14 +15,14 @@ pub struct Triangle {
     pub neighbors: Vec<usize>
 }
 
-impl Triangle {
+impl MeshTriangle {
     fn add_neighbor(&mut self, n : usize) {
         self.neighbors.push(n);
     }
 }
 
-impl PartialEq for Triangle {
-    fn eq(&self, rhs: &Triangle) -> bool {
+impl PartialEq for MeshTriangle {
+    fn eq(&self, rhs: &MeshTriangle) -> bool {
         self.normal == rhs.normal
             && self.v1 == rhs.v1
             && self.v2 == rhs.v2
@@ -30,7 +31,7 @@ impl PartialEq for Triangle {
     }
 }
 
-impl Eq for Triangle {}
+impl Eq for MeshTriangle {}
 
 /*
 fn point_eq(lhs: [f32; 3], rhs: [f32; 3]) -> bool {
@@ -58,7 +59,7 @@ pub struct BinaryStlHeader {
 
 pub struct BinaryStlFile {
     pub header: BinaryStlHeader,
-    pub triangles: Vec<Triangle>,
+    pub triangles: Vec<MeshTriangle>,
     pub points: Vec<Point>
 }
 
@@ -86,14 +87,14 @@ fn read_point<T: ReadBytesExt>(input: &mut T) -> Result<[f32; 3]> {
 */
 
 // it adds neighbors and collects unique points in vector
-fn add_point_to_vec(point : Point, points : &mut Vec<Point>, triangle : &mut Triangle, ts : &mut Vec<Triangle>) -> usize {
+fn add_point_to_vec(point : Point, points : &mut Vec<Point>, triangle : &mut MeshTriangle, ts : &mut Vec<MeshTriangle>) -> usize {
     let res : Option<usize>;
     {
         let f = |x: &(usize, &Point)| *(x.1) == point;
         let op = points.iter().enumerate().find(f);
         res = match op {
             Option::None => None,
-            Some((i,p)) => Some(i)
+            Some((i,_)) => Some(i)
         }
     }
 
@@ -116,14 +117,14 @@ fn add_point_to_vec(point : Point, points : &mut Vec<Point>, triangle : &mut Tri
 }
 
 
-fn read_triangle<T: ReadBytesExt>(input: &mut T, points: &mut Vec<Point>, ts: &mut Vec<Triangle>) -> Result<Triangle> {
+fn read_triangle<T: ReadBytesExt>(input: &mut T, points: &mut Vec<Point>, ts: &mut Vec<MeshTriangle>) -> Result<MeshTriangle> {
     let normal = read_point(input)?.convert_to_vector();
     let v1 = read_point(input)?;
     let v2 = read_point(input)?;
     let v3 = read_point(input)?;
     let attr_count = input.read_u16::<LittleEndian>()?;
 
-    let mut tr = Triangle {
+    let mut tr = MeshTriangle {
         normal: normal,
         v1: 0, v2: 0, v3: 0,
         attr_byte_count: attr_count,
@@ -162,12 +163,12 @@ pub fn read_stl<T: ReadBytesExt>(input: &mut T) -> Result<BinaryStlFile> {
     // read the header
     let header = read_header(input)?;
 
-    let mut ts : Vec<Triangle> = Vec::new();
+    let mut ts : Vec<MeshTriangle> = Vec::new();
     let mut ps : Vec<Point> = Vec::new();
 
 
     for _ in 0 .. header.num_triangles {
-        let tr : Triangle;
+        let tr : MeshTriangle;
         {
             tr = read_triangle(input, &mut ps, &mut ts)?
         }
@@ -221,7 +222,7 @@ pub fn write_stl<T: WriteBytesExt>(out: &mut T,
 
 #[cfg(test)]
 mod test {
-    use super::{BinaryStlFile, BinaryStlHeader, write_stl, read_stl, Triangle};
+    use super::{BinaryStlFile, BinaryStlHeader, write_stl, read_stl, MeshTriangle};
     use std::io::Cursor;
     use bo::point::Point;
     use bo::vector::Vector;
@@ -235,7 +236,7 @@ mod test {
             header: BinaryStlHeader { header: [0u8; 80],
                 num_triangles: 1 },
             triangles: vec![
-                Triangle {
+                MeshTriangle {
                     normal: Vector::new(0f32, 1f32, 0f32),
                     v1: 0,
                     v2: 1,
@@ -274,7 +275,7 @@ mod test {
             header: BinaryStlHeader { header: [0u8; 80],
                 num_triangles: 1 },
             triangles: vec![
-                Triangle {
+                MeshTriangle {
                     normal: Vector::new(0f32, 1f32, 0f32),
                     v1: 0,
                     v2: 1,

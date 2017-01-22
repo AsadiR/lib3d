@@ -6,6 +6,7 @@ use bo::eq_f32;
 use bo::base_object::BaseObject;
 use std::cmp::Ordering;
 
+#[derive(Debug)]
 #[derive(Clone)]
 pub struct Point {
     pub x: f32,
@@ -17,6 +18,11 @@ impl Point {
     pub fn convert_to_vector(self) -> Vector {
         Vector {x: self.x, y: self.y, z: self.z}
     }
+
+    pub fn get_vector(&self) -> Vector {
+        Vector {x: self.x, y: self.y, z: self.z}
+    }
+
     pub fn new(x : f32, y : f32, z : f32) -> Point {
         Point{x: x, y: y, z: z}
     }

@@ -76,7 +76,7 @@ mod tests {
     use cf::create;
     use bo::*;
     use std::option::Option;
-    use qm::*;
+    //use qm::*;
 
     #[test]
     fn point_intersection() {

@@ -104,7 +104,7 @@ mod tests {
     use cf::intersect::*;
     use cf::create;
     use bo::*;
-    use qm::*;
+    //use qm::*;
     use std::option::Option;
 
     #[test]

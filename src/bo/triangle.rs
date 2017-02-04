@@ -1,5 +1,6 @@
 use bo::point::Point;
 use bo::plane::Plane;
+use bo::vector::Vector;
 
 #[derive(Debug)]
 pub struct Triangle {
@@ -23,6 +24,12 @@ impl Triangle {
             normal : (&self.p1 - &self.p2).cross_product(&(&self.p2 - &self.p3)),
             point : self.p1.clone()
         }
+    }
+
+    pub fn get_normal(&self) -> Vector {
+        let v1 = &self.p1 - &self.p2;
+        let v2 = &self.p2 - &self.p3;
+        v1.cross_product(&v2)
     }
 }
 

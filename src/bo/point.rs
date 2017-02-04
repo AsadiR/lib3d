@@ -2,9 +2,11 @@ use std::ops::Add;
 use std::ops::Sub;
 use std::fmt;
 use bo::vector::Vector;
-use bo::eq_f32;
+use bo::{eq_f32, EPS};
 use bo::base_object::BaseObject;
 use std::cmp::Ordering;
+use std::f32::consts::PI;
+use std::f32;
 
 #[derive(Debug)]
 #[derive(Clone)]
@@ -12,6 +14,17 @@ pub struct Point {
     pub x: f32,
     pub y: f32,
     pub z: f32
+}
+
+#[derive(PartialEq, Eq)]
+pub enum EClassify {
+    Left,
+    Right,
+    Behind,
+    Beyond,
+    Org,
+    Dest,
+    Between
 }
 
 impl Point {
@@ -26,6 +39,67 @@ impl Point {
     pub fn new(x : f32, y : f32, z : f32) -> Point {
         Point{x: x, y: y, z: z}
     }
+
+    pub fn swap_yz(& mut self) {
+        let temp = self.y;
+        self.y = self.z;
+        self.z = temp;
+    }
+
+    pub fn swap_xy(& mut self) {
+        let temp = self.x;
+        self.x = self.y;
+        self.y = temp;
+    }
+
+    pub fn swap_xz(& mut self) {
+        let temp = self.x;
+        self.x = self.z;
+        self.z = temp;
+    }
+
+    pub fn classify(&self, p0 : &Point, p1 : &Point) -> EClassify {
+        let a = p1 - p0;
+        let b = self - p0;
+        let sa = a.x*b.y - b.x*a.y;
+        match 1 {
+            _ if sa > EPS => return EClassify::Left,
+            _ if sa < -EPS => return EClassify::Right,
+            _ if (a.x * b.x < 0.0) | (a.y * b.y < 0.0) => return EClassify::Behind,
+            _ if a.length() < b.length() => return EClassify::Beyond,
+            _ if *p0 == *self => return EClassify::Org,
+            _ if *p1 == *self => return EClassify::Dest,
+            _ => return EClassify::Between
+        }
+    }
+
+    pub fn rotate_around_axis(&mut self, point_on_axis : &Point, axis_dir : &Vector, angle : f32) {
+        /*
+        Point r = v - PointOnAxis;
+        return PointOnAxis + cos(RadFromDeg(Angle)) * r
+            + ((1 - cos(RadFromDeg(Angle))) * AxisDir.dotProduct3D(r)) * AxisDir
+            + sin(RadFromDeg(Angle)) * AxisDir.crossProduct(r);
+        */
+        assert!(f32::abs(axis_dir.length() - 1.) <= EPS, "AxisDir must be unit vector");
+
+        let res : Point;
+        {
+            let v: &Point = self;
+
+            let r: Vector = v - point_on_axis;
+            let part1: Point = point_on_axis + &(&r * rad_from_deg(angle).cos());
+            let part2: f32 = axis_dir.dot_product(&r) * (1. - rad_from_deg(angle).cos());
+            let part3: Vector = (&axis_dir.cross_product(&r)) * rad_from_deg(angle).sin();
+            res = &(&part1 + &(axis_dir * part2)) + &part3;
+        }
+        *self = res
+
+    }
+
+}
+
+fn rad_from_deg(x : f32) -> f32 {
+    return (PI / 180.) * x;
 }
 
 impl<'a,'b> Add<&'b Vector> for &'a Point {

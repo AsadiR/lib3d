@@ -42,7 +42,7 @@ mod tests {
     use cf::intersect::*;
     use cf::create;
     use bo::*;
-    use qm::*;
+    //use qm::*;
     use std::option::Option;
 
     #[test]
@@ -68,7 +68,6 @@ mod tests {
             } else {
                 panic!("Wrong result {}", expected_p);
             }
-            return;
         } else {
             panic!("Wrong info");
         }

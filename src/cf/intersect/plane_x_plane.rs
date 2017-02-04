@@ -98,8 +98,8 @@ mod tests {
     use cf::intersect::*;
     use cf::create;
     use bo::*;
-    use qm::*;
-    use std::option::Option;
+    //use qm::*;
+    //use std::option::Option;
 
     #[test]
     fn plane_x_plane_intersection() {

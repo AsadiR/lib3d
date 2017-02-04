@@ -177,7 +177,7 @@ mod tests {
     use cf::create;
     use bo::*;
     use std::option::Option;
-    use qm::*;
+    //use qm::*;
 
     #[test]
     fn triangles_in_the_plane() {
@@ -277,8 +277,6 @@ mod tests {
 
         let mut raf_simple_txt : RafSimpleTxT = create();
         let res = raf_simple_txt.intersect(&tr1, &tr2);
-
-        panic!();
 
         if let (Some(s), Option::None, InfoTxT::Intersecting) = res  {
             if s != es {

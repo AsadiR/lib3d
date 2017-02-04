@@ -2,9 +2,9 @@
 
 use bo::vector::Vector;
 use bo::point::Point;
+use bo::triangle::Triangle;
 use std::io::{Result, ErrorKind, Error};
 use byteorder::{ReadBytesExt, LittleEndian, WriteBytesExt};
-
 
 pub struct MeshTriangle {
     pub normal: Vector,
@@ -19,6 +19,7 @@ impl MeshTriangle {
     fn add_neighbor(&mut self, n : usize) {
         self.neighbors.push(n);
     }
+
 }
 
 impl PartialEq for MeshTriangle {
@@ -33,23 +34,6 @@ impl PartialEq for MeshTriangle {
 
 impl Eq for MeshTriangle {}
 
-/*
-fn point_eq(lhs: [f32; 3], rhs: [f32; 3]) -> bool {
-    lhs[0] == rhs[0] && lhs[1] == rhs[1] && lhs[2] == rhs[2]
-}
-
-impl PartialEq for Triangle {
-    fn eq(&self, rhs: &Triangle) -> bool {
-        point_eq(self.normal, rhs.normal)
-            && point_eq(self.v1, rhs.v1)
-            && point_eq(self.v2, rhs.v2)
-            && point_eq(self.v3, rhs.v3)
-            && self.attr_byte_count == rhs.attr_byte_count
-    }
-}
-
-impl Eq for Triangle {}
-*/
 pub type Mesh = BinaryStlFile;
 
 pub struct BinaryStlHeader {
@@ -63,6 +47,45 @@ pub struct BinaryStlFile {
     pub points: Vec<Point>
 }
 
+impl BinaryStlFile {
+    pub fn new() -> BinaryStlFile {
+        BinaryStlFile {
+            header: BinaryStlHeader { header: [0u8; 80], num_triangles: 0 },
+            triangles: Vec::new(),
+            points: Vec::new()
+        }
+    }
+
+    pub fn add_triangle(&mut self, tr : Triangle) {
+        let mut m_tr = MeshTriangle {
+            normal: tr.get_normal(),
+            v1: 0, v2: 0, v3: 0,
+            attr_byte_count: 0,
+            neighbors: Vec::new()
+        };
+
+        m_tr.v1 = add_point_to_vec(tr.p1, &mut self.points, &mut m_tr, &mut self.triangles);
+        m_tr.v2 = add_point_to_vec(tr.p2, &mut self.points, &mut m_tr, &mut self.triangles);
+        m_tr.v3 = add_point_to_vec(tr.p3, &mut self.points, &mut m_tr, &mut self.triangles);
+
+        self.triangles.push(m_tr);
+        self.header.num_triangles += 1;
+    }
+
+    pub fn add_triangles(&mut self, ts : Vec<Triangle>) {
+        for t in ts {
+            self.add_triangle(t);
+        }
+    }
+
+    pub fn write_stl<T: WriteBytesExt>(
+        &self,
+        out: &mut T,
+    ) -> Result<()> {
+        write_stl(out, self)
+    }
+}
+
 fn read_point<T: ReadBytesExt>(input: &mut T) -> Result<Point> {
     let x1 = input.read_f32::<LittleEndian>()?;
     let x2 = input.read_f32::<LittleEndian>()?;
@@ -70,21 +93,6 @@ fn read_point<T: ReadBytesExt>(input: &mut T) -> Result<Point> {
 
     Ok(Point {x: x1, y: x2, z: x3})
 }
-/*
-pub struct BinaryStlFile {
-    pub header: BinaryStlHeader,
-    pub triangles: Vec<Triangle>
-}
-
-
-fn read_point<T: ReadBytesExt>(input: &mut T) -> Result<[f32; 3]> {
-    let x1 = try!(input.read_f32::<LittleEndian>());
-    let x2 = try!(input.read_f32::<LittleEndian>());
-    let x3 = try!(input.read_f32::<LittleEndian>());
-
-    Ok([x1, x2, x3])
-}
-*/
 
 // it adds neighbors and collects unique points in vector
 fn add_point_to_vec(point : Point, points : &mut Vec<Point>, triangle : &mut MeshTriangle, ts : &mut Vec<MeshTriangle>) -> usize {
@@ -117,7 +125,10 @@ fn add_point_to_vec(point : Point, points : &mut Vec<Point>, triangle : &mut Mes
 }
 
 
-fn read_triangle<T: ReadBytesExt>(input: &mut T, points: &mut Vec<Point>, ts: &mut Vec<MeshTriangle>) -> Result<MeshTriangle> {
+fn read_triangle<T: ReadBytesExt>(
+    input: &mut T, points: &mut Vec<Point>,
+    ts: &mut Vec<MeshTriangle>
+) -> Result<MeshTriangle> {
     let normal = read_point(input)?.convert_to_vector();
     let v1 = read_point(input)?;
     let v2 = read_point(input)?;
@@ -200,8 +211,10 @@ fn write_point<T: WriteBytesExt>(out: &mut T, p: [f32; 3]) -> Result<()> {
 */
 
 
-pub fn write_stl<T: WriteBytesExt>(out: &mut T,
-                                   stl: &BinaryStlFile) -> Result<()> {
+pub fn write_stl<T: WriteBytesExt>(
+    out: &mut T,
+    stl: &BinaryStlFile
+) -> Result<()> {
     assert!(stl.header.num_triangles as usize == stl.triangles.len());
 
     //write the header.
@@ -226,7 +239,7 @@ mod test {
     use std::io::Cursor;
     use bo::point::Point;
     use bo::vector::Vector;
-    use std::io::prelude::*;
+    //use std::io::prelude::*;
     use std::fs::File;
 
     #[test]

@@ -4,6 +4,9 @@ use std::ops::Mul;
 use std::fmt;
 use bo::eq_f32;
 use bo::point::Point;
+use std::f32;
+//use core::num::Float;
+//use std::num::Float;
 
 pub struct Vector {
     pub x: f32,
@@ -46,6 +49,17 @@ impl Vector {
     }
     pub fn new(x : f32, y : f32, z : f32) -> Vector {
         Vector {x:x, y:y, z:z}
+    }
+
+    pub fn length(&self) -> f32 {
+        (self.x*self.x + self.y*self.y + self.z*self.z).sqrt()
+    }
+
+    pub fn normalize(&mut self) {
+        let l = self.length();
+        self.x /= l;
+        self.y /= l;
+        self.z /= l;
     }
 }
 

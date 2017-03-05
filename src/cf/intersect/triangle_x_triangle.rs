@@ -6,6 +6,7 @@ use cf::intersect::line_x_segment::{AfLxS, InfoLxS, RafSimpleLxS};
 use cf::intersect::segment_x_segment::{AfSxS, InfoSxS, RafSimpleSxS};
 
 #[derive(Debug)]
+#[derive(PartialEq,Eq)]
 pub enum InfoTxT {
     Collinear,
     NotIntersecting,
@@ -68,22 +69,33 @@ impl
             return (None, None, InfoTxT::Collinear);
         }
 
-        if (dist1 > 0.) & (dist2 > 0.) & (dist3 > 0.) | (dist1 < 0.) & (dist2 < 0.) & (dist3 < 0.) {
+        if (dist1 > 0.) & (dist2 > 0.) & (dist3 > 0.) |
+            (dist1 < 0.) & (dist2 < 0.) & (dist3 < 0.) {
             return (None, None, InfoTxT::NotIntersecting);
         }
 
         let plane1 = tr1.gen_plane();
 
+        let dist1 = signed_distance(&tr2.p1, &plane1);
+        let dist2 = signed_distance(&tr2.p2, &plane1);
+        let dist3 = signed_distance(&tr2.p3, &plane1);
+
+        if (dist1 > 0.) & (dist2 > 0.) & (dist3 > 0.) |
+            (dist1 < 0.) & (dist2 < 0.) & (dist3 < 0.) {
+            return (None, None, InfoTxT::NotIntersecting);
+        }
+
         let mut raf_pxp : RafPxP = create();
         let (op_line, _) = raf_pxp.intersect(&plane1, &plane2);
         let line = op_line.unwrap();
 
-        //println!("line: {}\n", line);
 
-        let s1 = intersect_line_and_triangle::<RafLxS>(&line, &tr1);
-        let s2 = intersect_line_and_triangle::<RafLxS>(&line, &tr2);
+        let mut s1 = intersect_line_and_triangle::<RafLxS>(&line, &tr1);
+        let mut s2 = intersect_line_and_triangle::<RafLxS>(&line, &tr2);
+        s1.flip_if_dest_less_than_org();
+        s2.flip_if_dest_less_than_org();
 
-        //println!("s1: {} \n s2: {} \n", s1, s2);
+        println!("s1: {} \n s2: {} \n", s1, s2);
 
         let mut raf_sxs : RafSxS = create();
         let res = raf_sxs.intersect_segments_on_the_line(&s1,&s2);
@@ -146,6 +158,7 @@ fn intersect_line_and_triangle<RafLxS : AfLxS>(line : &Line, tr : &Triangle) -> 
 
         // zero points on the line
         (false, false, false) => {
+            println!("Yes ofc!!!");
             let res1 = raf_lxs.intersect(line, &s1);
             let res2 = raf_lxs.intersect(line, &s2);
             let res3 = raf_lxs.intersect(line, &s3);
@@ -162,7 +175,11 @@ fn intersect_line_and_triangle<RafLxS : AfLxS>(line : &Line, tr : &Triangle) -> 
                     return Segment {org: res2.0.unwrap(), dest: res3.0.unwrap()};
                 }
 
-                (r1, r2, r3) => panic!("Smth goes wrong! {:?} {:?} {:?}", r1, r2, r3)
+                (r1, r2, r3) => {
+                    print!("tr: {:?}\n", tr);
+                    print!("line: {:?}\n", line);
+                    panic!("Smth goes wrong! {:?} {:?} {:?}", r1, r2, r3)
+                }
             }
         }
 
@@ -268,8 +285,8 @@ mod tests {
         let p3 = Point::new(1., 1., 0.);
         let tr2 = Triangle::new(p1,p2,p3);
 
-        let ep1 = Point {x: 1., y: 1., z: 0.};
-        let ep2 = Point {x: -1., y: 1., z: 0.};
+        let ep1 = Point {x: -1., y: 1., z: 0.};
+        let ep2 = Point {x: 1., y: 1., z: 0.};
 
         let es = Segment {org: ep1, dest: ep2};
 
@@ -282,6 +299,36 @@ mod tests {
             if s != es {
                 panic!("Wrong result: {}", s);
             }
+        } else {
+            panic!("Wrong info: {:?}", res.2);
+        };
+    }
+
+    #[test]
+    fn intersect_triangles_bug_test1() {
+        let p1 = Point::new(-4., -4., 0.);
+        let p2 = Point::new(4., -4., 0.);
+        let p3 = Point::new(-4., 4., 0.);
+        let tr1 = Triangle::new(p1,p2,p3);
+
+        let p1 = Point::new(0., 2., 2.);
+        let p2 = Point::new(-4., 2., 2.);
+        let p3 = Point::new(0., 2., -2.);
+        let tr2 = Triangle::new(p1,p2,p3);
+
+        let ep1 = Point {x: -2., y: 2., z: 0.};
+        let ep2 = Point {x: -2., y: 2., z: 0.};
+        let es = Segment {org: ep1, dest: ep2};
+
+        //println!("tr1: {:?},\n tr2 {:?}", tr1, tr2);
+
+        let mut raf_simple_txt : RafSimpleTxT = create();
+        let res = raf_simple_txt.intersect(&tr1, &tr2);
+
+        if let (Some(s), Option::None, InfoTxT::Intersecting) = res  {
+            if s != es {
+                panic!("Wrong result: {}", s);
+           }
         } else {
             panic!("Wrong info: {:?}", res.2);
         };

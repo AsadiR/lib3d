@@ -4,6 +4,7 @@ pub mod line_x_plane;
 pub mod plane_x_plane;
 pub mod triangle_x_triangle;
 pub mod line_x_segment;
+pub mod mesh_x_mesh;
 
 /*
 pub import Af (Abstract function), Raf (Realization of abstract function), Info
@@ -14,3 +15,5 @@ pub use self::line_x_plane::{AfLxP, InfoLxP, RafSimpleLxP};
 pub use self::plane_x_plane::{AfPxP, InfoPxP, RafSimplePxP};
 pub use self::triangle_x_triangle::{AfTxT, InfoTxT, RafSimpleTxT};
 pub use self::line_x_segment::{AfLxS, InfoLxS, RafSimpleLxS};
+pub use self::mesh_x_mesh::{AfMxM, MeshIArea, RafSimpleMxM};
+

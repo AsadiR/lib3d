@@ -76,14 +76,27 @@ impl<QM  : QualityMetric, RLI : AfLxL> AfSxS for RafSimpleSxS<QM,RLI> {
     // Intersect segments lying on the same line
     fn intersect_segments_on_the_line(&mut self, sa : &Segment, sb : &Segment) -> (Option<Segment>, InfoSxS) {
         match 1 {
+            _ if (sa.dest == sb.org) => {
+                (Some(Segment {org: sa.dest.clone(), dest: sa.dest.clone()}),
+                 InfoSxS::IntersectingInASegment)
+            }
+
+            _ if (sb.dest == sa.org) => {
+                (Some(Segment {org: sb.dest.clone(), dest: sb.dest.clone()}),
+                 InfoSxS::IntersectingInASegment)
+            }
+            //sa поглащает sb
             _ if (sa.org <= sb.org) &
                 (sa.dest >= sb.dest) => {
                 (Some(sb.clone()), InfoSxS::IntersectingInASegment)
             },
+            //sb поглащает sa
             _ if (sb.org <= sa.org) &
                 (sb.dest >= sa.dest) => {
+                println!("Stranger!");
                 (Some(sa.clone()), InfoSxS::IntersectingInASegment)
             },
+            //
             _ if (sa.dest > sb.org) &
                 (sa.dest < sb.dest) => {
                 (Some(Segment {org: sb.org.clone(), dest: sa.dest.clone()}),

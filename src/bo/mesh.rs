@@ -19,7 +19,6 @@ impl MeshTriangle {
     fn add_neighbor(&mut self, n : usize) {
         self.neighbors.push(n);
     }
-
 }
 
 impl PartialEq for MeshTriangle {
@@ -83,6 +82,15 @@ impl BinaryStlFile {
         out: &mut T,
     ) -> Result<()> {
         write_stl(out, self)
+    }
+
+    pub fn get_triangle(&self, index : usize) -> Triangle {
+        let mt : &MeshTriangle = &self.triangles[index];
+        let p1 = self.points[mt.v1].clone();
+        let p2 = self.points[mt.v2].clone();
+        let p3 = self.points[mt.v3].clone();
+
+        Triangle::new(p1,p2,p3)
     }
 }
 

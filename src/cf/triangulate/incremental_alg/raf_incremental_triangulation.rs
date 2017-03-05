@@ -13,6 +13,7 @@ impl<QM : QualityMetric>  Af for RafIncrementalTriangulation<QM> {}
 
 impl<QM : QualityMetric> AfTriangulate for RafIncrementalTriangulation<QM> {
     fn triangulate(&mut self, mut points : Vec<Point>) -> Vec<Triangle> {
+        // all points should be unique! Otherwise algorithm will hang out!
         assert!(points.len() >= 3, "Not enough points!");
 
         let mut ts : Vec<Triangle> = Vec::new();
@@ -31,10 +32,12 @@ impl<QM : QualityMetric> AfTriangulate for RafIncrementalTriangulation<QM> {
             normal_ = &normal_ * -1.;
             d_ = normal_.dot_product(&points[0].get_vector());
         }
+
         check_points(&normal_, &d_, &points);
 
         //let n = points.len();
         let e : Segment = hull_edge(&mut points);
+        println!("ps {:?}", points);
         println!("hull_edge_res = {}\n", e);
 
         let mut frontier : BTreeSet<Segment> = BTreeSet::new();
@@ -45,7 +48,10 @@ impl<QM : QualityMetric> AfTriangulate for RafIncrementalTriangulation<QM> {
             frontier.remove(&e);
 
             if mate(&e, &mut points, &mut p, &normal_, &d_) {
-                println!("mate_point = {} \n", p);
+                //println!("edge: {:?}", e);
+                //println!("mate_point = {} \n", p);
+                //println!("");
+                //println!("frontie {:?}", frontier);
 
                 update_frontier(&mut frontier, &p, &e.org);
                 update_frontier(&mut frontier, &e.dest, &p);
@@ -133,13 +139,14 @@ fn mate(
     let mut f = e.clone();
     f.rot(normal_, d_);
 
+    /*
     println!("mate_info:");
     println!("normal: {}", normal_);
     println!("d: {}", d_);
     println!("e: {}", e);
     println!("rot_e: {}", f);
     println!("\n");
-
+    */
 
     for i in 0..n {
         let c = points[i].classify(&e.org, &e.dest);
@@ -284,6 +291,7 @@ mod tests {
     //use bo::*;
     //use qm::*;
     use std::fs::File;
+    use std::collections::BTreeSet;
 
 /*
     #[test]
@@ -312,7 +320,7 @@ mod tests {
         let e = Point::new(0.0, 1.0, 0.0);
         let f = Point::new(1./3., 1./3., 1./3.);
 
-        let ps = vec![a, b, c, d, e, f];
+        let ps : Vec<Point> = vec![a, b, c, d, e, f];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -345,7 +353,7 @@ mod tests {
         let d = Point::new(1.0, 0.0, -1.0);
         let e = Point::new(-1.0, 2.0, -1.0);
 
-        let ps = vec![a, b, c, d, e];
+        let ps : Vec<Point> = vec![a, b, c, d, e];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -378,7 +386,7 @@ mod tests {
         let d = Point::new(-1./3., -1./3., 4./3.);
         let e = Point::new(5., -3., -4.);
 
-        let ps = vec![a, b, c, d, e];
+        let ps : Vec<Point> = vec![a, b, c, d, e];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -411,7 +419,7 @@ mod tests {
         let d = Point::new(3., -1., 2.);
         let e = Point::new(5., 1., 0.);
 
-        let ps = vec![a, b, c, d, e];
+        let ps : Vec<Point> = vec![a, b, c, d, e];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -444,7 +452,7 @@ mod tests {
         let d = Point::new(1., 2., 2.);
         let e = Point::new(1., 1., 3.);
 
-        let ps = vec![a, b, c, d, e];
+        let ps : Vec<Point> = vec![a, b, c, d, e];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -477,7 +485,7 @@ mod tests {
         let d = Point::new(1./3., 1., 1./3.);
         let e = Point::new(5., 1., -1.);
 
-        let ps = vec![a, b, c, d, e];
+        let ps : Vec<Point> = vec![a, b, c, d, e];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -511,7 +519,7 @@ mod tests {
         let e = Point::new(-1., 3., 1.);
         let f = Point::new(1., 3., 1.);
 
-        let ps = vec![a, b, c, d, e, f];
+        let ps : Vec<Point> = vec![a, b, c, d, e, f];
 
         let mut raf_inc_tr : RafIncrementalTriangulation = create();
         let ts = raf_inc_tr.triangulate(ps.clone());
@@ -525,7 +533,7 @@ mod tests {
         mesh.add_triangles(ts);
 
 
-        let mut f = File::create("res_of_tests/inc_tr/test_b.stl").unwrap();
+        let mut f = File::create("res_of_tests/inc_tr/test_c.stl").unwrap();
 
         assert!(mesh.points.len() == 6);
 
@@ -534,9 +542,4 @@ mod tests {
             Err(_) => panic!()
         };
     }
-
-
-
-
-
 }

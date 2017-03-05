@@ -16,6 +16,7 @@ translate
 
 #[derive(PartialEq,Eq)]
 #[derive(Clone)]
+#[derive(Debug)]
 pub struct Segment {
     pub org : Point,
     pub dest: Point
@@ -45,6 +46,12 @@ impl Segment {
         assert!(f32::abs(self.org.get_vector().dot_product(&normal) - d) < EPS);
         assert!(f32::abs(self.dest.get_vector().dot_product(&normal) - d) < EPS);
         assert!(&(&self.dest.get_vector() + &self.org.get_vector()) * 0.5 == m.get_vector());
+    }
+
+    pub fn flip_if_dest_less_than_org(&mut self) {
+        if self.dest < self.org {
+            self.flip()
+        }
     }
 
     pub fn flip(&mut self) {

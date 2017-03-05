@@ -40,13 +40,15 @@ impl<QM  : QualityMetric, RafLxL : AfLxL> AfLxS for RafSimpleLxS<QM,RafLxL> {
             Line {org: line.org.clone(), dest: line.dest.clone()}
         };
 
+        //println!("s {}", segment);
         let lb = if segment.org >= segment.dest {
+            //println!("swaped\n");
             Line {org: segment.dest.clone(), dest: segment.org.clone()}
         } else {
             Line {org: segment.org.clone(), dest: segment.dest.clone()}
         };
-        //println!("la {}", a);
-        //println!("lb {}", b);
+        //println!("my la {}", la);
+        //println!("lb {}", lb);
 
         let (sp, info) = self.raf_lxl.intersect(&la, &lb);
         match info {
@@ -56,10 +58,12 @@ impl<QM  : QualityMetric, RafLxL : AfLxL> AfLxS for RafSimpleLxS<QM,RafLxL> {
                 //let (os, info) = intersect_segments_on_the_line(&la.convert_to_segment(), &lb.convert_to_segment());
                 (None, Some(lb.convert_to_segment()), InfoLxS::IntersectingInASegment)
             },
+
+
             InfoLxL::Intersecting => {
                 let p = sp.unwrap();
+                //println!("point: {:?}, lb.org: {:?}, lb.dest: {:?}", p, lb.org, lb.dest);
                 if (p >= lb.org) & (p <= lb.dest) {
-                    //println!("Good");
                     (Some(p), None, InfoLxS::IntersectingInAPoint)
                 } else {
                     //println!("Bad: {}, lb.org: {}, {}", p, lb.org, (p >= lb.org));

@@ -135,9 +135,10 @@ impl Ord for Point {
     fn cmp(&self, other: &Point) -> Ordering {
         match self {
             _ if *self == *other => Ordering::Equal,
-            _ if (self.x < other.x) |
-                eq_f32(self.x,other.x) & (self.y < other.y) |
-                eq_f32(self.x,other.x) & eq_f32(self.y,other.y) & (self.z < other.z) => Ordering::Less,
+            _ if !eq_f32(self.x,other.x) & (self.x < other.x) |
+                !eq_f32(self.y,other.y) & eq_f32(self.x,other.x) & (self.y < other.y) |
+                !eq_f32(self.z,other.z) & eq_f32(self.x,other.x) & eq_f32(self.y,other.y) & (self.z < other.z)
+            => Ordering::Less,
             _ => Ordering::Greater
         }
     }

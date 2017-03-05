@@ -3,7 +3,7 @@ use bo::*;
 use cf::Af;
 use rulinalg::matrix::Matrix as rMatrix;
 use rulinalg::vector::Vector as rVector;
-
+use std::mem;
 
 
 pub enum InfoLxL {
@@ -27,20 +27,26 @@ impl<QM : QualityMetric> AfLxL for RafSimpleLxL<QM> {
 
     // http://mathhelpplanet.com/static.php?p=vzaimnoe-raspolozhenie-pryamyh-v-prostranstve
     fn intersect(&mut self, a : &Line, b : &Line) -> (Option<Point>, InfoLxL) {
+        // TODO полность переделать этот метод
+        // TODO отладить поэлементное пересечение треугольников
+        // TODO отобразить зоны пересечения и сравнить с действительностью
+
+
         //self.qm.start();
         let m1 : &Point = &a.org;
-        let l1 : Vector = &a.dest - &a.org;
+        let mut l1 : Vector = &a.dest - &a.org;
         let m2 : &Point = &b.org;
-        let l2 : Vector = &b.dest - &b.org;
-        let m : Vector = m2 - m1;
+        let mut l2 : Vector = &b.dest - &b.org;
+        let m : Vector = &b.org - &a.org;
 
-        //Are lines skew? If yes then return (None, None).
+
+        //Are lines skew?
         let mp = m.mixed_product(&l1,&l2);
         if !eq_f32(mp,0.0) {
             return (None, InfoLxL::Skew);
         }
 
-        //Are lines coincidence? If yes then return (None, Some(a))
+        //Are lines coincidence?
         let c_cond = l1.is_collinear_to(&m);
         if c_cond {
             return (None, InfoLxL::Coincidence);
@@ -51,6 +57,7 @@ impl<QM : QualityMetric> AfLxL for RafSimpleLxL<QM> {
         if !c_cond & p_cond {
             return (None, InfoLxL::Collinear);
         }
+
 
         /*
         1) m1.x + l1.x*t = m2.x + l2.x*s
@@ -65,32 +72,24 @@ impl<QM : QualityMetric> AfLxL for RafSimpleLxL<QM> {
         l1.z    -l2.z   (m2.z - m1.z)
         */
 
-        let v1 = Vector{x: l1.x, y: -l2.x, z: 0.};
-        let v2 = Vector{x: l1.y, y: -l2.y, z: 0.};
-        let are_xy_dep = v1.is_collinear_to(&v2);
+        //I can improve it!
+        let nv = l1.cross_product(&l2);
 
-        let a : rMatrix<f32>;
-        let y : rVector<f32>;
-        if are_xy_dep {
-            a = rMatrix::new(2,2, vec![l1.x, -l2.x,
-                                       l1.z, -l2.z]);
-            y = rVector::new(vec![m2.x-m1.x, m2.z-m1.z]);
-        } else {
-            a = rMatrix::new(2,2, vec![l1.x, -l2.x,
-                                       l1.y, -l2.y]);
-            y = rVector::new(vec![m2.x-m1.x, m2.y-m1.y]);
-        };
+        let a = rMatrix::new(3, 3, vec![l1.x, -l2.x, nv.x,
+                                        l1.y, -l2.y, nv.y,
+                                        l1.z, -l2.z, nv.z]);
+        let y = rVector::new(vec![m2.x-m1.x+nv.x, m2.y-m1.y+nv.y, m2.z-m1.z+nv.z]);
+
+
+        //println!("matrix:");
+        //println!("{}", a);
+        //println!("{}", y);
+
+
 
         let x = a.solve(y).unwrap();
+        //println!("{}", x);
         let (t,_) = (x[0],x[1]);
-
-        /*
-        let p = Point {
-            x: (m1.x*l1.y*l2.x - m2.x*l2.y*l1.x - m1.y*l1.x*l2.x + m2.y*l1.x*l2.x)/(l1.y*l2.x - l2.y*l1.x),
-            y: (m1.y*l1.x*l2.y - m2.y*l2.x*l1.y - m1.x*l1.y*l2.y + m2.x*l1.y*l2.y)/(l1.x*l2.y - l2.x*l1.y),
-            z: (m1.z*l1.y*l2.z - m2.z*l2.y*l1.z - m1.y*l1.z*l2.z + m2.y*l1.z*l2.z)/(l1.y*l2.z - l2.y*l1.z)
-        };
-        */
 
         let p = m1 + &(&l1 * t);
 

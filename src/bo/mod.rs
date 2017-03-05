@@ -16,7 +16,7 @@ pub use self::point::EClassify;
 pub use self::vector::Vector;
 pub use self::line::Line;
 pub use self::curve::Curve;
-pub use self::mesh::Mesh;
+pub use self::mesh::{Mesh, read_stl};
 pub use self::segment::Segment;
 pub use self::plane::Plane;
 pub use self::triangle::Triangle;

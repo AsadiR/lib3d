@@ -10,6 +10,7 @@ rotate
 intersect
 */
 
+#[derive(Debug)]
 pub struct Line {
     pub org : Point,
     pub dest: Point

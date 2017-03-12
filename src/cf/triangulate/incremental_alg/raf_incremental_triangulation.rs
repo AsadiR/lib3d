@@ -14,7 +14,7 @@ impl<QM : QualityMetric>  Af for RafIncrementalTriangulation<QM> {}
 impl<QM : QualityMetric> AfTriangulate for RafIncrementalTriangulation<QM> {
     fn triangulate(&mut self, mut points : Vec<Point>) -> Vec<Triangle> {
         // all points should be unique! Otherwise algorithm will hang out!
-        assert!(points.len() >= 3, "Not enough points!");
+        assert!(points.len() > 3, "Not enough points!");
 
         let mut ts : Vec<Triangle> = Vec::new();
 
@@ -37,8 +37,8 @@ impl<QM : QualityMetric> AfTriangulate for RafIncrementalTriangulation<QM> {
 
         //let n = points.len();
         let e : Segment = hull_edge(&mut points);
-        println!("ps {:?}", points);
-        println!("hull_edge_res = {}\n", e);
+        //println!("ps {:?}", points);
+        //println!("hull_edge_res = {}\n", e);
 
         let mut frontier : BTreeSet<Segment> = BTreeSet::new();
         frontier.insert(e);

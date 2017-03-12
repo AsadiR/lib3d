@@ -18,6 +18,15 @@ impl Triangle {
         }
     }
 
+    pub fn get(&mut self, index : usize) -> &Point {
+        match index {
+            1 => &self.p1,
+            2 => &self.p2,
+            3 => &self.p3,
+            _ => panic!("Bad index!")
+        }
+    }
+
     pub fn gen_plane(&self) -> Plane {
         Plane {
             // check it!

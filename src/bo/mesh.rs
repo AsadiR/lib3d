@@ -92,6 +92,7 @@ impl BinaryStlFile {
 
         Triangle::new(p1,p2,p3)
     }
+
 }
 
 fn read_point<T: ReadBytesExt>(input: &mut T) -> Result<Point> {
